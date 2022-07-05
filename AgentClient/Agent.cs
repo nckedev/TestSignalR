@@ -101,8 +101,14 @@ public class AgentClient : IAgentMethods
     {
         if (IsConnected())
         {
-            await Task.Delay(3000);
-            await _hubConnection.SendToHub(requestId, JobbsResponse<Part>.Error("error", "error"));
+            try
+            {
+                throw new Exception("part not found");
+            }
+            catch (Exception e)
+            {
+                await _hubConnection.SendToHub(requestId, JobbsResponse<Part>.Error("error", e.Message));
+            }
         }
     }
 }

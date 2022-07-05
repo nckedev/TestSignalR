@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Shared;
 
 namespace TestSignalR;
 
@@ -74,7 +75,7 @@ public class MessageList
             //o is not null and not T, it has to be json string
             else if (o is not null)
             {
-                var res = JsonConvert.DeserializeObject<T>(o.ToString() ?? "");
+                var res = JsonConvert.DeserializeObject<T>(o.ToString() ?? throw new Exception("Deserializing exception"));
                 if (res is not null)
                 {
                     value = res;
@@ -83,7 +84,7 @@ public class MessageList
                 }
             }
         }
-        
+
         value = default;
         return false;
     }

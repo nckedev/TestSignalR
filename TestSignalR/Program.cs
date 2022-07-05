@@ -8,7 +8,7 @@ builder.Services.AddSignalR(o =>
     o.EnableDetailedErrors = true;
     o.MaximumReceiveMessageSize = null;
 
-}).AddNewtonsoftJsonProtocol();
+}); //.AddNewtonsoftJsonProtocol();
 
 var app = builder.Build();
 

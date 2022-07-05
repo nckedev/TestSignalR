@@ -51,13 +51,13 @@ public static class HubExtensions
         return methodInfo?.Name ?? throw new Exception("methodInfo i _GetMethodName är null");
     }
 
-    private static string _GetExpressionName<T>(Expression<Func<IAppClientMethods, Task<T>>> exp)
+    private static string _GetExpressionName<T>(Expression<Func<IHubMethods, Task<T>>> exp)
     {
         var a = ((MethodCallExpression) exp.Body).Method.Name;
         return a;
     }
 
-    private static List<object> _GetArguments<T>(Expression<Func<IAppClientMethods, Task<T>>> invokeMethod)
+    private static List<object> _GetArguments<T>(Expression<Func<IHubMethods, Task<T>>> invokeMethod)
     {
         var list = new List<object>();
 
@@ -105,7 +105,7 @@ public static class HubExtensions
     /// <code> TRetrun var = await hub.InvokeOnHub(x => x.IAppClientMethod("123")); </code>
     /// </summary>
     public static async Task<TReturn> InvokeOnHub<TReturn>(this HubConnection connection,
-        Expression<Func<IAppClientMethods, Task<TReturn>>> f, CancellationToken ct = default)
+        Expression<Func<IHubMethods, Task<TReturn>>> f, CancellationToken ct = default)
     {
         var args = _GetArguments(f);
         return args.Count switch

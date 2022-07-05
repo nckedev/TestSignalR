@@ -1,29 +1,33 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 using Shared;
 
 namespace TestSignalR;
 
-public class TestHub : Hub<IAgentMethods> , IAppClientMethods
+public class TestHub : Hub<IAgentMethods>, IHubMethods
 {
-    private static List<string> _connections = new();
+    private static readonly List<string> Connections = new();
     private static readonly MessageList MessageList = new();
     private static string _agent = string.Empty;
 
-    public override async Task OnConnectedAsync()
+    public override Task OnConnectedAsync()
     {
-        if (!_connections.Any())
+        if (!Connections.Any())
         {
             _agent = Context.ConnectionId;
         }
-        _connections.Add(Context.ConnectionId);
+
+        Connections.Add(Context.ConnectionId);
         Console.WriteLine(Context);
         Console.WriteLine(Context.ConnectionId + " connected");
+        return Task.CompletedTask;
     }
 
-    public override async Task OnDisconnectedAsync(Exception? ex)
+    public override Task OnDisconnectedAsync(Exception? ex)
     {
         Console.WriteLine("Disconnected");
         Console.WriteLine(Context.ConnectionId);
+        return Task.CompletedTask;
         // _connections.Remove(Context.ConnectionId);
     }
 
@@ -32,13 +36,17 @@ public class TestHub : Hub<IAgentMethods> , IAppClientMethods
     {
         for (var i = 0; i < waitFor / waitForInterval; i++)
         {
-            if (MessageList.TryGet(requestId, out T value))
+            if (MessageList.TryGet(requestId, out T? value))
             {
-                return value;
+                if (value is not null)
+                {
+                    return value;
+                }
             }
 
             await Task.Delay(waitForInterval);
         }
+
         MessageList.Remove(requestId);
         throw new Exception("Fick inget svar från agenten");
     }
@@ -48,7 +56,7 @@ public class TestHub : Hub<IAgentMethods> , IAppClientMethods
     {
         var requestId = MessageList.NewEntry();
         await Clients.Client(_agent).RequestPart(requestId, id);
-        
+
         return await WaitForAnswer<JobbsResponse<Part>>(requestId);
     }
 
@@ -69,9 +77,15 @@ public class TestHub : Hub<IAgentMethods> , IAppClientMethods
     }
 
 
-    public async Task Receive(Guid requestId, object obj)
+    public Task Receive(Guid requestId, object obj)
     {
-        MessageList.TrySet(requestId, obj);
-    }
+        var res = JsonConvert.DeserializeObject<JobbsResponse<object>>(obj.ToString() ?? "");
+        if (res?.Success == false)
+        {
+            //log(response.Message);
+        }
 
+        MessageList.TrySet(requestId, obj);
+        return Task.CompletedTask;
+    }
 }

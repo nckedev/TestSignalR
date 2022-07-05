@@ -1,6 +1,6 @@
 namespace Shared;
 
-public interface IAppClientMethods
+public interface IHubMethods
 {
     Task<JobbsResponse<Part>> AppRequestPart(string id);
     Task<JobbsResponse<List<Part>>> AppRequestListOfParts();
