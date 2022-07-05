@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+
 namespace Shared;
 
 public interface IAgentMethods
