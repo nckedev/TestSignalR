@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Shared;
@@ -57,8 +53,7 @@ public static class HubExtensions
 
     private static string _GetExpressionName<T>(Expression<Func<IHubMethods, Task<T>>> exp)
     {
-        var a = ((MethodCallExpression) exp.Body).Method.Name;
-        return a;
+        return ((MethodCallExpression) exp.Body).Method.Name;
     }
 
     private static List<object> _GetArguments<T>(Expression<Func<IHubMethods, Task<T>>> invokeMethod)
@@ -67,35 +62,10 @@ public static class HubExtensions
 
         if (invokeMethod.Body is MethodCallExpression methodCallExpression)
         {
-            var b = methodCallExpression.Arguments;
-            foreach (var arg in b)
+            var arguments = methodCallExpression.Arguments;
+            foreach (var arg in arguments)
             {
-                if (arg is ConstantExpression constantExpression && constantExpression.Value != null)
-                {
-                    list.Add(constantExpression.Value);
-                }
-                else if (arg is BinaryExpression binaryExpression)
-                {
-                    var del = Expression.Lambda(binaryExpression, invokeMethod.Parameters).Compile();
-                    var o = del.DynamicInvoke(binaryExpression.Left);
-                    list.Add(o ?? throw new ArgumentException("BinaryExpression evaluated to null"));
-                }
-                else if (arg is MemberExpression memberExpression)
-                {
-                    var objectMember = Expression.Convert(memberExpression, typeof(object));
-                    var getterlambda = Expression.Lambda<Func<object>>(objectMember);
-                    var getValue = getterlambda.Compile();
-                    list.Add(getValue());
-                }
-                else if (arg is MethodCallExpression innerMethodCallExpression)
-                {
-                    var res = Expression.Lambda(innerMethodCallExpression, null).Compile().DynamicInvoke();
-                    list.Add(res ?? throw new ArgumentException("MethodCallExpression evaluated to null"));
-                }
-                else
-                {
-                    throw new Exception("Unknown expression type");
-                }
+                list.Add(Expression.Lambda<Func<object>>(arg).Compile().Invoke());
             }
         }
 
@@ -104,9 +74,9 @@ public static class HubExtensions
 
 
     /// <summary>
-    /// invokes IAppClientMethod on hub<br />
+    /// invokes IHubMethods on hub<br />
     /// From App to Hub<br />
-    /// <code> TRetrun var = await hub.InvokeOnHub(x => x.IAppClientMethod("123")); </code>
+    /// <code> TRetrun res = await hub.InvokeOnHub(x => x.IHubMethods("123")); </code>
     /// </summary>
     public static async Task<TReturn> InvokeOnHub<TReturn>(this HubConnection connection,
         Expression<Func<IHubMethods, Task<TReturn>>> f, CancellationToken ct = default)
@@ -121,7 +91,9 @@ public static class HubExtensions
                 cancellationToken: ct),
             4 => await connection.InvokeAsync<TReturn>(_GetExpressionName(f), args[0], args[1], args[2], args[3],
                 cancellationToken: ct),
-            _ => throw new ArgumentException("kan inte hantera mer än 4 arguments")
+            5 => await connection.InvokeAsync<TReturn>(_GetExpressionName(f), args[0], args[1], args[2], args[3],
+                args[4], cancellationToken: ct),
+            _ => throw new ArgumentException("kan inte hantera mer än 5 argument")
         };
     }
 }

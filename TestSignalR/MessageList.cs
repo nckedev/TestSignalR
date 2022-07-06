@@ -18,24 +18,14 @@ public class MessageList
     public Guid NewEntry()
     {
         var key = Guid.NewGuid();
-        if (!TrySetKey(key))
+        if (_messages.TryAdd(key, null))
         {
-            throw new Exception("Key finns redan");
+            return key;
         }
 
-        return key;
+        throw new Exception("Key finns redan");
     }
 
-    private bool TrySetKey(Guid key)
-    {
-        if (!_messages.ContainsKey(key))
-        {
-            _messages.TryAdd(key, null);
-            return true;
-        }
-
-        return false;
-    }
 
     public bool TrySet(Guid key, object? obj)
     {
@@ -48,16 +38,6 @@ public class MessageList
         throw new KeyNotFoundException("nyckeln finns inte i listan ");
     }
 
-    public object? Get(Guid key)
-    {
-        if (_messages.TryGetValue(key, out var obj))
-        {
-            _messages.Remove(key);
-            return obj;
-        }
-
-        return null;
-    }
 
     public void Remove(Guid key)
     {
@@ -78,7 +58,8 @@ public class MessageList
             //o is not null and not T, it has to be json string
             else if (o is not null)
             {
-                var res = JsonConvert.DeserializeObject<T>(o.ToString() ?? throw new Exception("Deserializing exception"));
+                var res = JsonConvert.DeserializeObject<T>(o.ToString() ??
+                                                           throw new Exception("Json deserializing exception"));
                 if (res is not null)
                 {
                     value = res;

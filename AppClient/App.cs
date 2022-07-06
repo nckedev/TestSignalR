@@ -46,19 +46,25 @@ namespace AppClient
             var part = await _hubConnection.InvokeOnHub(x => x.AppRequestPart("123"));
             Console.WriteLine(part.Data?.Name);
 
-            var part2 = await _hubConnection.InvokeOnHub(x => x.AppRequestPart(fakePart.Id));
+            var part2 = await _hubConnection.InvokeOnHub(x => x.AppRequestPart(fakePart.Id + (1+2).ToString()));
             Console.WriteLine(part2.Data?.Name);
 
-            var part3 = await _hubConnection.InvokeOnHub(x => x.AppRequestPart(TestMethodAsArgument().Substring(0, 2)));
+            var part3 = await _hubConnection.InvokeOnHub(x => x.AppRequestPart(TestMethodAsArgument("123").Substring(0, 2)));
             Console.WriteLine(part3.Data?.Name);
 
-            var part4 = await _hubConnection.InvokeOnHub(x => x.AppRequestInvalidPart(TestMethodAsArgument()));
-            Console.WriteLine(part4.Success ? part4.Data?.Name : part4.Message);
+            var part4 = await _hubConnection.InvokeOnHub(x => x.AppRequestPart(TestMethodAsArgument("123")));
+            Console.WriteLine(part4.Success? part4.Data?.Name : part4.Message);
 
+            var part5 = await _hubConnection.InvokeOnHub(x => x.AppRequestInvalidPart(TestMethodAsArgument("123")));
+            Console.WriteLine(part5.Success ? part5.Data?.Name : part5.Message);
+
+            var part6 = await _hubConnection.InvokeOnHub(x => x.AppRequestPartTwoArguments(fakePart.Id, "filter"));
+            Console.WriteLine(part6.Data?.Name);
+            
             var partList = await _hubConnection.InvokeOnHub(x => x.AppRequestListOfParts());
             Console.WriteLine(partList.Success ? partList.Data?.Count ?? 0 : "error");
         }
 
-        private static string TestMethodAsArgument() => "123";
+        private static string TestMethodAsArgument(string a) => a + "test";
     }
 }

@@ -52,7 +52,7 @@ public class TestHub : Hub<IAgentMethods>, IHubMethods
         }
 
         MessageList.Remove(requestId);
-        throw new Exception("Fick inget svar från agenten");
+        throw new Exception($"Fick inget svar från agenten (request id: {requestId.ToString()})");
     }
 
 
@@ -80,6 +80,14 @@ public class TestHub : Hub<IAgentMethods>, IHubMethods
         return await WaitForAnswer<JobbsResponse<Part>>(requestId);
     }
 
+    public async Task<JobbsResponse<Part>> AppRequestPartTwoArguments(string id, string filter)
+    {
+        var requestId = MessageList.NewEntry();
+        await Clients.Client(_agent).RequestPart(requestId, id);
+        
+        return await WaitForAnswer<JobbsResponse<Part>>(requestId);
+    }
+
 
     public Task Receive(Guid requestId, object obj)
     {
@@ -89,7 +97,11 @@ public class TestHub : Hub<IAgentMethods>, IHubMethods
             //log(response.Message);
         }
 
-        MessageList.TrySet(requestId, obj);
-        return Task.CompletedTask;
+        if (MessageList.TrySet(requestId, obj))
+        {
+            return Task.CompletedTask;
+        }
+
+        throw new Exception("Kunde inte lägga till objekt");
     }
 }
